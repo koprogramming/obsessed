@@ -28,16 +28,27 @@ def add_header_and_footer(html_text):
 
 
 def delete_build_folder(folder):
-    shutil.rmtree("/folder_name", ignore_errors=True)
+    shutil.rmtree(folder, ignore_errors=True)
+    os.mkdir(folder)
 
 
 def create_site(path):
 
     delete_build_folder(f"{path}/{OUTPUT_FOLDER}")
 
+    for style_file in glob.glob("*.css", root_dir=path):
+        print(style_file)
+        fc = ""
+        with open(f"{path}/{style_file}") as sf:
+            fc = sf.read()
+        with open(f"{path}/{OUTPUT_FOLDER}/{style_file}", "w") as f:
+            f.write(fc)
+
     for notes_file in glob.glob("*.md", root_dir=path):
         with open(f"{path}/{notes_file}") as f:
             content = f.read()
+            title = notes_file[:-3]
+            content = f"# {title}\n" + content
             html = markdown.markdown(content, extensions=[CoolWikilinkExtension()])
             finished = add_header_and_footer(html)
             notes_file_name = modify_name(notes_file)
