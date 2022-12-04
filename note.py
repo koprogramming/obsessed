@@ -1,4 +1,18 @@
+from html.parser import HTMLParser
+
 from utils import modify_name, to_html
+
+
+class OutboudLinkParser(HTMLParser):
+    def __init__(self, *, convert_charrefs: bool = ...) -> None:
+        self.outbound_links = set([])
+        super().__init__(convert_charrefs=convert_charrefs)
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "a":
+            for attr, data in attrs:
+                if attr == "href":
+                    self.outbound_links.add(data)
 
 
 class Note:
@@ -14,12 +28,22 @@ class Note:
             self.content_md += f.read()
 
         self.content_html = to_html(self.content_md)
-        self.outboud_links = []
+        self.parser = OutboudLinkParser()
+        self.parser.feed(self.content_html)
+        self.outbound_links = self.parser.outbound_links
         self.inbound_links = []
-        # self.content_html = ""
 
     def __repr__(self) -> str:
         return f"<note object '{self.title}' >"
+
+    def to_link_path(self, folder_name):
+        return f"/{folder_name}/"
+
+    def update_inbound_links_from(self, other):
+        if self.title == other.title:
+            return
+        if self.to_link_path(self.output_folder_name) in other.outbound_links:
+            self.inbound_links.append(other)
 
     def is_in_folder(self):
         if self.title == "index":
@@ -32,6 +56,18 @@ class Note:
         if self.title == "__left_hand_menu__":
             return True
         return False
+
+    def add_inbound_links_to_content(self):
+        links_to_add = [link for link in self.inbound_links if not link.is_special()]
+        if links_to_add == []:
+            return
+        extra = "<div class='backlinks'>"
+        extra += "\n<h2> Links to this page </h2>\n"
+        for note in links_to_add:
+            extra += f"\n<a class='backlink' href='/{note.output_folder_name}'>{note.title}</a>\n"
+        extra += "\n</div>"
+
+        self.content_html += extra
 
     def get_folder_path(self, output_folder):
         if self.title == "index":

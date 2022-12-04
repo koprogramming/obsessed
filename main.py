@@ -68,6 +68,13 @@ def create_site(path):
     for notes_file in glob.glob("*.md", root_dir=path):
         notes.append(Note(notes_file, path))
 
+    for note_a in notes:
+        for note_b in notes:
+            note_a.update_inbound_links_from(note_b)
+
+    for note in notes:
+        note.add_inbound_links_to_content()
+
     header = make_left_hand_menu(HEADER, create_notes_list(notes), path)
 
     for note in notes:
