@@ -35,8 +35,12 @@ def delete_build_folder(folder):
 
 def make_left_hand_menu(HEADER, list_of_links, folder):
     content = ""
-    with open(f"{folder}/__left_hand_menu__.md") as f:
-        content = to_html(f.read())
+    try:
+        with open(f"{folder}/__left_hand_menu__.md") as f:
+            content = to_html(f.read())
+    except FileNotFoundError:
+        print("WARN: You have no left hand menu.")
+        pass
 
     content += list_of_links
     return HEADER.format(left_hand_menu=content)
