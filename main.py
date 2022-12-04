@@ -17,7 +17,7 @@ HEADER = ""
 FOOTER = ""
 
 
-with open("fragments/_foot.html") as f, open("fragments/_head.html") as h:
+with open("./fragments/_foot.html") as f, open("./fragments/_head.html") as h:
     HEADER = h.read()
     FOOTER = f.read()
 
