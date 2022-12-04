@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "obsessed"
+version = "0.1.0"
+description = "A tool for obsidian website creation"
+authors = ["k0p <khaliliorientedprogramming@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+markdown = "^3.4.1"
+
+
+[tool.poetry.group.dev.dependencies]
+black = {version = "^22.10.0", allow-prereleases = true}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
