@@ -2,12 +2,14 @@ import glob
 import os
 import shutil
 import sys
+from typing import List
 
 import markdown
 from markdown.extensions.wikilinks import WikiLinkExtension
 
 from CoolWikilinksExtension import CoolWikilinkExtension
-from utils import modify_name
+from note import Note
+from utils import modify_name, to_html
 
 OUTPUT_FOLDER = "build"
 
@@ -20,11 +22,10 @@ with open("fragments/_foot.html") as f, open("fragments/_head.html") as h:
     FOOTER = f.read()
 
 
-def add_header_and_footer(html_text):
+def add_header_and_footer(header, html_text, footer):
     """
     Adds a header and a footer
     """
-    return HEADER + html_text + FOOTER
 
 
 def delete_build_folder(folder):
@@ -32,34 +33,52 @@ def delete_build_folder(folder):
     os.mkdir(folder)
 
 
+def make_left_hand_menu(HEADER, list_of_links, folder):
+    content = ""
+    with open(f"{folder}/__left_hand_menu__.md") as f:
+        content = to_html(f.read())
+
+    content += list_of_links
+    return HEADER.format(left_hand_menu=content)
+
+
+def create_notes_list(notes):
+    notes_list = "<div> <h2> All posts 👇 </h2>"
+    for note in notes:
+        if note.is_special():
+            continue
+        notes_list += (
+            f"\n <p><a href='/{note.output_folder_name}'> {note.title} </a></p> \n"
+        )
+    notes_list += "\n</div>"
+    return notes_list
+
+
 def create_site(path):
 
     delete_build_folder(f"{path}/{OUTPUT_FOLDER}")
-
     for style_file in glob.glob("*.css", root_dir=path):
-        print(style_file)
         fc = ""
         with open(f"{path}/{style_file}") as sf:
             fc = sf.read()
         with open(f"{path}/{OUTPUT_FOLDER}/{style_file}", "w") as f:
             f.write(fc)
 
+    notes: List[Note] = []
     for notes_file in glob.glob("*.md", root_dir=path):
-        with open(f"{path}/{notes_file}") as f:
-            content = f.read()
-            title = notes_file[:-3]
-            content = f"# {title}\n" + content
-            html = markdown.markdown(content, extensions=[CoolWikilinkExtension()])
-            finished = add_header_and_footer(html)
-            notes_file_name = modify_name(notes_file)
-            folder_to_make = f"{path}/{OUTPUT_FOLDER}/{notes_file_name}"
-            if not notes_file == "index.md":
-                os.makedirs(folder_to_make)
+        notes.append(Note(notes_file, path))
 
-            if notes_file == "index.md":
-                folder_to_make = f"{path}/{OUTPUT_FOLDER}"
-            with open(f"{folder_to_make}/index.html", "w") as h:
-                h.write(finished)
+    header = make_left_hand_menu(HEADER, create_notes_list(notes), path)
+
+    for note in notes:
+        folder_path = note.get_folder_path(OUTPUT_FOLDER)
+
+        if note.is_in_folder():
+            os.makedirs(folder_path)
+
+        note.add_header_and_footer(header, FOOTER)
+        with open(f"{folder_path}/index.html", "w") as h:
+            h.write(note.content_html)
 
 
 if __name__ == "__main__":
